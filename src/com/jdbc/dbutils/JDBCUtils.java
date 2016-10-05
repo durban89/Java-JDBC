@@ -1,5 +1,7 @@
 package com.jdbc.dbutils;
 
+import com.jdbc.dbutils.models.UserInfo;
+
 import javax.xml.transform.Result;
 import java.lang.reflect.Field;
 import java.sql.*;
@@ -90,7 +92,7 @@ public class JDBCUtils {
         int colLen = metaData.getColumnCount();
         while (resultSet.next()) {
             for (int i = 0; i < colLen; i++) {
-                String colName = metaData.getColumnName(i);
+                String colName = metaData.getColumnName(i + 1);
                 Object colValue = resultSet.getObject(colName);
                 if (colValue == null) {
                     colValue = "";
@@ -227,7 +229,29 @@ public class JDBCUtils {
     }
 
     public void release(){
+        if(resultSet != null){
+            try {
+                resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
+        if(preparedStatement != null){
+            try {
+                preparedStatement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if(connection != null){
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static void main(String[] args) {
@@ -235,17 +259,66 @@ public class JDBCUtils {
         jdbcUtils.getConnection();
 
         //插入测试
-        String sql = "INSERT INTO userinfo (username,pass) VALUES (?,?)";
-        List<Object> params = new ArrayList<>();
-        params.add("jack");
-        params.add("123456");
-        try {
-            jdbcUtils.updateByPreparedStatement(sql, params);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            jdbcUtils.release();
-        }
+//        String sql = "INSERT INTO userinfo (username,pass) VALUES (?,?)";
+//        List<Object> params = new ArrayList<>();
+//        params.add("rose");
+//        params.add("123456");
+//
+//        try {
+//            boolean flag = jdbcUtils.updateByPreparedStatement(sql, params);
+//            System.out.println("insert flag = " + flag);
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            jdbcUtils.release();
+//        }
 
+        //单条查询
+//        String sql = "SELECT * FROM userinfo WHERE autokid = ?";
+//        List<Object> params = new ArrayList<>();
+//        params.add("1");
+//        try {
+//            Map<String, Object> result = jdbcUtils.findSingleResult(sql, params);
+//            System.out.println("select result = " + result.toString());
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            jdbcUtils.release();
+//        }
+
+        //查询多条记录
+//        String sql = "SELECT * FROM userinfo";
+//        try {
+//            List<Map<String, Object>> result = jdbcUtils.findMoreResult(sql, null);
+//            System.out.println("select result = " + result.toString());
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            jdbcUtils.release();
+//        }
+
+        //通过 反射机制 单条查询
+//        String sql = "SELECT * FROM userinfo WHERE autokid = ?";
+//        List<Object> params = new ArrayList<>();
+//        params.add("1");
+//        try {
+//            UserInfo result = jdbcUtils.findSingleRefResult(sql, params, UserInfo.class);
+//            System.out.println("select result = " + result.toString());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        } finally {
+//            jdbcUtils.release();
+//        }
+
+        //通过 反射机制 多条查询
+//        String sql = "SELECT * FROM userinfo";
+//        try {
+//            List<UserInfo> result = jdbcUtils.findMoreRefResult(sql, null, UserInfo.class);
+//            System.out.println("select result = " + result.toString());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        } finally {
+//            jdbcUtils.release();
+//        }
     }
 }

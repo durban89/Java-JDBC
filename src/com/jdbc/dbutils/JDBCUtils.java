@@ -1,13 +1,10 @@
 package com.jdbc.dbutils;
 
-import java.sql.PreparedStatement;
+import java.sql.*;
 
-import java.sql.Connection;
-
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -43,6 +40,7 @@ public class JDBCUtils {
 
     /**
      * UPDATE
+     *
      * @param sql
      * @param params
      * @return
@@ -64,6 +62,39 @@ public class JDBCUtils {
         flag = result > 0 ? true : false;
         return flag;
 
+    }
+
+    /**
+     * 获取单挑记录
+     * @param sql
+     * @param params
+     * @return
+     * @throws SQLException
+     */
+    public Map<String, Object> findSingleResult(String sql, List<Object> params) throws SQLException {
+        Map<String, Object> map = new HashMap<>();
+
+        int index = 1;
+        preparedStatement = connection.prepareStatement(sql);
+        if (params != null && !params.isEmpty()) {
+            for(int i = 0; i<params.size();i++){
+                preparedStatement.setObject(index++, params.get(i));
+            }
+        }
+        resultSet = preparedStatement.executeQuery();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int colLen = metaData.getColumnCount();
+        while (resultSet.next()){
+            for(int i = 0; i<colLen; i++){
+                String colName = metaData.getColumnName(i);
+                Object colValue = resultSet.getObject(colName);
+                if(colValue == null){
+                    colValue = "";
+                }
+                map.put(colName, colValue);
+            }
+        }
+        return map;
     }
 
 

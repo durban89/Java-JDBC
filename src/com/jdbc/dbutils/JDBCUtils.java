@@ -183,6 +183,49 @@ public class JDBCUtils {
         return resultObject;
     }
 
+    /**
+     * 通过反射机制 多条记录查询
+     * @param sql
+     * @param params
+     * @param cls
+     * @param <T>
+     * @return
+     * @throws Exception
+     */
+    public <T> List<T> findMoreRefResult(String sql, List<Object> params, Class<T> cls) throws Exception{
+        List<T> list = new ArrayList<T>();
+
+        int index = 1;
+        preparedStatement = connection.prepareStatement(sql);
+        if (params != null && !params.isEmpty()) {
+            for (int i = 0; i < params.size(); i++) {
+                preparedStatement.setObject(index++, params.get(i));
+            }
+        }
+        resultSet = preparedStatement.executeQuery();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int colLen = metaData.getColumnCount();
+        while (resultSet.next()) {
+            T resultObject = cls.newInstance();
+
+            for (int i = 0; i < colLen; i++) {
+                String colName = metaData.getColumnName(i + 1);
+                Object colValue = resultSet.getObject(colName);
+                if (colValue == null) {
+                    colValue = "";
+                }
+                Field field = cls.getDeclaredField(colName);
+                field.setAccessible(true);
+                field.set(resultObject, colValue);
+            }
+
+            list.add(resultObject);
+
+        }
+
+        return list;
+    }
+
     public void release(){
 
     }

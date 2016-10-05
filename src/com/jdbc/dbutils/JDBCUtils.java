@@ -1,6 +1,7 @@
 package com.jdbc.dbutils;
 
 import javax.xml.transform.Result;
+import java.lang.reflect.Field;
 import java.sql.*;
 
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class JDBCUtils {
     private final String USERNAME = "root";
     private final String PASS = "123456";
     private final String DRIVER = "com.mysql.jdbc.Driver";
-    private final String URL = "jdbc:mysql://127.0.0.1:3306/test";
+    private final String URL = "jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false";
     private Connection connection;
     private PreparedStatement preparedStatement;
     private ResultSet resultSet;
@@ -140,7 +141,68 @@ public class JDBCUtils {
         return list;
     }
 
+    /**
+     * 利用反射机制 实现单条查询
+     * @param sql
+     * @param params
+     * @param cls
+     * @param <T>
+     * @return
+     * @throws Exception
+     */
+    public <T> T findSingleRefResult(String sql, List<Object> params, Class<T> cls) throws Exception{
+        T resultObject = null;
+
+        int index = 1;
+        preparedStatement = connection.prepareStatement(sql);
+        if (params != null && !params.isEmpty()) {
+            for (int i = 0; i < params.size(); i++) {
+                preparedStatement.setObject(index++, params.get(i));
+            }
+        }
+        resultSet = preparedStatement.executeQuery();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int colLen = metaData.getColumnCount();
+        while (resultSet.next()) {
+            resultObject = cls.newInstance();
+
+            for (int i = 0; i < colLen; i++) {
+                String colName = metaData.getColumnName(i + 1);
+                Object colValue = resultSet.getObject(colName);
+                if (colValue == null) {
+                    colValue = "";
+                }
+                Field field = cls.getDeclaredField(colName);
+                field.setAccessible(true);
+                field.set(resultObject, colValue);
+            }
+        }
+
+
+
+        return resultObject;
+    }
+
+    public void release(){
+
+    }
+
     public static void main(String[] args) {
         JDBCUtils jdbcUtils = new JDBCUtils();
+        jdbcUtils.getConnection();
+
+        //插入测试
+        String sql = "INSERT INTO userinfo (username,pass) VALUES (?,?)";
+        List<Object> params = new ArrayList<>();
+        params.add("jack");
+        params.add("123456");
+        try {
+            jdbcUtils.updateByPreparedStatement(sql, params);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            jdbcUtils.release();
+        }
+
     }
 }
